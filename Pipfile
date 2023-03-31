@@ -9,6 +9,7 @@ google-cloud-storage = "*"
 functions-framework = "*"
 
 [dev-packages]
+black = "*"
 
 [requires]
 python_version = "3.11"

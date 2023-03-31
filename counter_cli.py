@@ -18,6 +18,8 @@ if __name__ == "__main__":
     parser.add_argument("--unique_words", help="unique words file in the bucket")
     # bucket name
     parser.add_argument("--bucket", help="bucket name")
+    # output bucket name
+    parser.add_argument("--output_bucket", help="output bucket name")
     args = parser.parse_args()
 
     # check that bucket name is provided
@@ -41,9 +43,22 @@ if __name__ == "__main__":
         parser.print_usage()
         exit()
 
+    # check that output bucket name is provided
+    if not args.output_bucket:
+        print("output bucket name is required")
+        # print usage
+        parser.print_usage()
+        exit()
+
+    # assert that bucket is not the same as the output bucket
+    assert (
+        args.bucket != args.output_bucket
+    ), "Bucket and output bucket cannot be the same"
+
     # create a GCP storage client
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(args.bucket)
+    output_bucket = storage_client.get_bucket(args.output_bucket)
 
     # check if the downloads directory exists
     # if not create it using os.mkdir
@@ -51,9 +66,11 @@ if __name__ == "__main__":
     if not os.path.exists("downloads"):
         os.mkdir("downloads")
 
-    # check if the unique words file exists in the bucket
+    # check if the unique words file exists in the output bucket
     # we will create it and upload it to the bucket in the end if it does not exist
-    stats = storage.Blob(bucket=bucket, name=args.unique_words).exists(storage_client)
+    stats = storage.Blob(bucket=output_bucket, name=args.unique_words).exists(
+        storage_client
+    )
 
     # download the unique words file from the GCP bucket
     if stats:
@@ -62,7 +79,7 @@ if __name__ == "__main__":
             [
                 "gsutil",
                 "cp",
-                "gs://" + args.bucket + "/" + args.unique_words,
+                "gs://" + args.output_bucket + "/" + args.unique_words,
                 "downloads/" + args.unique_words,
             ]
         )
@@ -167,6 +184,6 @@ if __name__ == "__main__":
             "gsutil",
             "cp",
             "downloads/" + args.unique_words,
-            "gs://" + args.bucket + "/" + args.unique_words,
+            "gs://" + args.output_bucket + "/" + args.unique_words,
         ]
     )
